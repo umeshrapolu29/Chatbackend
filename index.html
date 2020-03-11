@@ -51,7 +51,7 @@
             var textarea = element('textarea');
             var username = element('username');
             var clearBtn = element('clear');
-            var socket = undefined
+            var socket = undefined;
 
             // Set default status
             var statusDefault = status.textContent;
@@ -66,19 +66,33 @@
                     }, 4000);
                 }
             }
-            let uname=username.value
-            console.log("uname is : "+uname)
+            
             // Connect to socket.io
           //  var socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
 
 
             // Check for connection
             // if(socket !== undefined){
-                console.log('Connected to socket...');
+            //    console.log('Connected to socket...');
 
                 // Handle Output
-                socket.on('output', function(data){
-                    console.log(data);
+               
+
+                // experiment to send data
+                
+
+                // Get Status From Server
+                
+
+                // Handle Input
+                textarea.addEventListener('keydown', function(event){
+                    if(event.which === 13 && event.shiftKey == false){
+                        // Emit to server input
+                        let uname=username.value
+                          console.log("uname is : "+username)
+                        socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
+                        socket.on('output', function(data){
+                         console.log(data);
                     if(data.length){
                        // messages.innerHTML=''
                         for(var x = 0;x < data.length;x++){
@@ -93,10 +107,6 @@
                     }
                 });
 
-                // experiment to send data
-                
-
-                // Get Status From Server
                 socket.on('status', function(data){
                     // get message status
                     setStatus((typeof data === 'object')? data.message : data);
@@ -107,15 +117,14 @@
                     }
                 });
 
-                // Handle Input
-                textarea.addEventListener('keydown', function(event){
-                    if(event.which === 13 && event.shiftKey == false){
-                        // Emit to server input
-                        socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
                         socket.emit('input', {
                             name:username.value,
                             message:textarea.value
                         });
+
+                        socket.on('cleared', function(){
+                    messages.textContent = '';
+                });
 
                         event.preventDefault();
                     }
@@ -127,9 +136,7 @@
                 });
 
                 // Clear Message
-                socket.on('cleared', function(){
-                    messages.textContent = '';
-                });
+               
             // }
 
         })();
