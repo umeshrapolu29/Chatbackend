@@ -7,7 +7,10 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
     <title>MongoChat</title>
     <style>
-        #messages{height:300px;}
+        #messages{
+            height:300px;
+            overflow-y: scroll;
+        }
     </style>
 </head>
 <body>
@@ -48,6 +51,7 @@
             var textarea = element('textarea');
             var username = element('username');
             var clearBtn = element('clear');
+            var socket = undefined
 
             // Set default status
             var statusDefault = status.textContent;
@@ -62,28 +66,35 @@
                     }, 4000);
                 }
             }
-
+            let uname=username.value
+            console.log("uname is : "+uname)
             // Connect to socket.io
-            var socket = io.connect('http://127.0.0.1:4000');
+          //  var socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
+
 
             // Check for connection
-            if(socket !== undefined){
+            // if(socket !== undefined){
                 console.log('Connected to socket...');
 
                 // Handle Output
                 socket.on('output', function(data){
-                    //console.log(data);
+                    console.log(data);
                     if(data.length){
+                       // messages.innerHTML=''
                         for(var x = 0;x < data.length;x++){
                             // Build out message div
                             var message = document.createElement('div');
                             message.setAttribute('class', 'chat-message');
+                            
                             message.textContent = data[x].name+": "+data[x].message;
                             messages.appendChild(message);
                             messages.insertBefore(message, messages.firstChild);
                         }
                     }
                 });
+
+                // experiment to send data
+                
 
                 // Get Status From Server
                 socket.on('status', function(data){
@@ -100,6 +111,7 @@
                 textarea.addEventListener('keydown', function(event){
                     if(event.which === 13 && event.shiftKey == false){
                         // Emit to server input
+                        socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
                         socket.emit('input', {
                             name:username.value,
                             message:textarea.value
@@ -118,7 +130,7 @@
                 socket.on('cleared', function(){
                     messages.textContent = '';
                 });
-            }
+            // }
 
         })();
     </script>

@@ -46,48 +46,28 @@ mongoose.connect(url, function(err, db){
 
     // Connect to Socket.io
     client.on('connection', function(socket){
-        
+        let chat = db.collection('chats11');
         console.log("i am the bot")
-        db_user=socket.request._query['user']
-        console.log(db_user)
-        
-        // let chat = db.collection("db_user");
-        
-
 
         // Create function to send status
         sendStatus = function(s){
-            console.log("sending status: "+s)
             socket.emit('status', s);
         }
 
         // Get chats from mongo collection
-        // chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
-        //     if(err){
-        //         throw err;
-        //     }
+        chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
+            if(err){
+                throw err;
+            }
 
-        //     // Emit the messages
-        //     console.log("in chat . find")
-        //     socket.emit('output', res);
-        // });
+            // Emit the messages
+            socket.emit('output', res);
+        });
 
         // Handle input events
         socket.on('input', function(data){
-            console.log("data fetched: "+db_user)
-            let chat = db.collection("db_user");
-            chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
-                if(err){
-                    throw err;
-                }
-    
-                // Emit the messages
-                console.log("in chat . find")
-               // socket.emit('output', res);
-            });
             let name = data.name;
             let message = data.message;
-
             console.log("user name is: "+name)
 
             // Check for name and message
