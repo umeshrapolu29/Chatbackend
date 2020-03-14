@@ -6,6 +6,7 @@ const express = require('express');
  const route=express.Router();
 const app = express()
 var url=db.url
+var messagesLoaded = false;
 
 var multer=require('multer');
 
@@ -46,11 +47,18 @@ mongoose.connect(url, function(err, db){
 
     // Connect to Socket.io
     client.on('connection', function(socket){
-        let chat = db.collection('chats11');
+        
         console.log("i am the bot")
+        db_user=socket.request._query['user']
+        console.log(db_user)
+        
+        // let chat = db.collection("db_user");
+        
+
 
         // Create function to send status
         sendStatus = function(s){
+            console.log("sending status: "+s)
             socket.emit('status', s);
         }
 
@@ -61,13 +69,44 @@ mongoose.connect(url, function(err, db){
         //     }
 
         //     // Emit the messages
+        //     console.log("in chat . find")
         //     socket.emit('output', res);
         // });
 
         // Handle input events
         socket.on('input', function(data){
+            console.log("data fetched: "+db_user)
+
+            let id1=""
+            let id2=""
+
+            if(db_user=="kiran"){
+                id1="kiran_umesh"
+                id2="umesh_kiran"
+            }
+            else if (db_user=="umesh")
+            {
+                id2="kiran_umesh"
+                id1="umesh_kiran"
+            }
+            let chat = db.collection(id1);
+            let chat2 = db.collection(id2);
+            chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
+                if(err){
+                    throw err;
+                }
+    
+                // Emit the messages
+                console.log("in chat . find")
+                //if(!messagesLoaded){
+                socket.emit('output', res);
+                  //messagesLoaded = true;  
+               // }
+            });
+            
             let name = data.name;
             let message = data.message;
+
             console.log("user name is: "+name)
 
             // Check for name and message
@@ -78,6 +117,15 @@ mongoose.connect(url, function(err, db){
                 // Insert message
                 chat.insert({name: name, message: message}, function(){
                     client.emit('output', [data]);
+
+                    // Send status object
+                    sendStatus({
+                        message: 'Message sent',
+                        clear: true
+                    });
+                });
+                chat2.insert({name: name, message: message}, function(){
+                    // client.emit('output', [data]);
 
                     // Send status object
                     sendStatus({

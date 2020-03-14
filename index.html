@@ -11,6 +11,15 @@
             height:300px;
             overflow-y: scroll;
         }
+        h5{
+            font-weight: 400;
+            margin-right: 5px;
+            font-size: 1.2rem;
+        }
+        span{
+            font-weight: 500;
+            font-size: 1.8rem;
+        }
     </style>
 </head>
 <body>
@@ -23,7 +32,9 @@
                 </h1>
                 <div id="status"></div>
                 <div id="chat">
-                    <input type="text" id="username" class="form-control" placeholder="Enter name...">
+                    <!-- <input type="text" id="username" class="form-control" placeholder="Enter name..."> 
+                                         -->
+                                         <h5>User - <span id="username"></span></h5>
                     <br>
                     <div class="card">
                         <div id="messages" class="card-block">
@@ -53,6 +64,12 @@
             var clearBtn = element('clear');
             var socket = undefined;
 
+            sessionStorage.setItem('init',true)
+
+            let urlParam = new URLSearchParams(window.location.search);
+            let user = urlParam.get('user')
+            username.textContent = user;
+
             // Set default status
             var statusDefault = status.textContent;
 
@@ -66,35 +83,20 @@
                     }, 4000);
                 }
             }
+  
+
             
             // Connect to socket.io
-          //  var socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
-
+            var socket = io.connect('http://localhost:4000',{query: `user=${user}&init=${sessionStorage.getItem('init')}` });
 
             // Check for connection
-            // if(socket !== undefined){
-            //    console.log('Connected to socket...');
-
+            if(socket !== undefined){
+                console.log('Connected to socket...');
+                messages.innerHTML=''
                 // Handle Output
-               
-
-                // experiment to send data
-                
-
-                // Get Status From Server
-                
-
-                // Handle Input
-                textarea.addEventListener('keydown', function(event){
-                    if(event.which === 13 && event.shiftKey == false){
-                        // Emit to server input
-                        let uname=username.value
-                          console.log("uname is : "+username)
-                        socket = io.connect('http://localhost:4000',{query: `user=${uname}` });
-                        socket.on('output', function(data){
-                         console.log(data);
-                    if(data.length){
-                       // messages.innerHTML=''
+                socket.on('output', function(data){
+                    console.log(data);
+                    if(data.length){                       
                         for(var x = 0;x < data.length;x++){
                             // Build out message div
                             var message = document.createElement('div');
@@ -102,11 +104,16 @@
                             
                             message.textContent = data[x].name+": "+data[x].message;
                             messages.appendChild(message);
-                            messages.insertBefore(message, messages.firstChild);
+                            messages.insertBefore(message, messages.lastChild);
                         }
                     }
+                     sessionStorage.setItem('init',false)
                 });
 
+                // experiment to send data
+                
+
+                // Get Status From Server
                 socket.on('status', function(data){
                     // get message status
                     setStatus((typeof data === 'object')? data.message : data);
@@ -117,16 +124,18 @@
                     }
                 });
 
+                // Handle Input
+                textarea.addEventListener('keydown', function(event){
+                    
+                    if(event.which === 13 && event.shiftKey == false){
+                        // Emit to server input
                         socket.emit('input', {
-                            name:username.value,
+                            name:user,
                             message:textarea.value
                         });
-
-                        socket.on('cleared', function(){
-                    messages.textContent = '';
-                });
-
                         event.preventDefault();
+                        textarea.value = '';
+                        messages.scrollTo =messages.scrollHeight;
                     }
                 })
 
@@ -136,8 +145,10 @@
                 });
 
                 // Clear Message
-               
-            // }
+                socket.on('cleared', function(){
+                    messages.textContent = '';
+                });
+            }
 
         })();
     </script>
