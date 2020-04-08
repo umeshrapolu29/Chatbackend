@@ -43,13 +43,15 @@ mongoose.connect(url, function(err, db){
     // Connect to Socket.io
     client.on('connection', function(socket){
         
-        console.log("i am the bot")
+        console.log(" SOCKET CONNECTED....!!!")
+       
         db_user=socket.request._query['user']
-        console.log(db_user)
-        console.log(socket.request._query['init'])
         init=socket.request._query['init']
 
-        
+        console.log(db_user)
+        console.log(socket.request._query['init'])
+
+        //socket.emit('join','Welcome to chat')
         // let chat = db.collection("db_user");
         
 
@@ -59,6 +61,27 @@ mongoose.connect(url, function(err, db){
             console.log("sending status: "+s)
             socket.emit('status', s);
         }
+
+        socket.on('join',function(data){
+            console.log("user data : "+data)
+           
+                id2=data.friend+"_"+data.user
+                id1=data.user+"_"+data.friend
+            
+            
+            let chat = db.collection(id1);
+            let chat2 = db.collection(id2);
+            chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
+                if(err){
+                    throw err;
+                }
+    
+
+                socket.emit('load', res);
+                //   test="nottested";  
+                
+            });
+        })
 
         // Get chats from mongo collection
         // chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
@@ -72,39 +95,32 @@ mongoose.connect(url, function(err, db){
         // });
 
         // Handle input events
+//  Register , Message
+
+
         socket.on('input', function(data){
-            console.log("data fetched: "+db_user)
+            console.log("data fetched: "+data.user+"  "+data.friend)
             
 
-            let id1=""
-            let id2=""
+            // let id1=""
+            // let id2=""
 
-            if(db_user=="kiran"){
-                id1="kiran_umesh"
-                id2="umesh_kiran"
-            }
-            else if (db_user=="umesh")
-            {
-                id2="kiran_umesh"
-                id1="umesh_kiran"
-            }
+            // if(db_user=="kiran"){
+            //     id1="kiran_umesh"
+            //     id2="umesh_kiran"
+            // }
+            // else if (db_user=="umesh")
+            // {
+            //     id2="kiran_umesh"
+            //     id1="umesh_kiran"
+            // }
+            id2=data.friend+"_"+data.user
+            id1=data.user+"_"+data.friend
             let chat = db.collection(id1);
             let chat2 = db.collection(id2);
-            chat.find().limit(100).sort({_id:1}).toArray(function(err, res){
-                if(err){
-                    throw err;
-                }
-    
-                // Emit the messages
-                console.log("in chat . find")
-                console.log(init)
-                if(init){
-                socket.emit('output', res);
-                //   test="nottested";  
-                }
-            });
+           
             
-            let name = data.name;
+            let name = data.user;
             let message = data.message;
 
             console.log("user name is: "+name)
@@ -116,7 +132,7 @@ mongoose.connect(url, function(err, db){
             } else {
                 // Insert message
                 chat.insert({name: name, message: message}, function(){
-                    client.emit('output', [data]);
+                    client.emit('message', data);
 
                     // Send status object
                     sendStatus({
